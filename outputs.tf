@@ -17,3 +17,18 @@ output "ssh_master" {
   description = "SSH command to connect to master"
   value       = "ssh root@${digitalocean_droplet.master.ipv4_address}"
 }
+
+output "kubeconfig_setup" {
+  description = "Commands to configure local kubectl with the cluster"
+  value       = <<-EOT
+    Run these commands to configure local kubectl:
+
+    ssh root@${digitalocean_droplet.master.ipv4_address} \
+      'cat /etc/kubernetes/admin.conf' > ~/.kube/config
+
+    sed -i 's/127.0.0.1/${digitalocean_droplet.master.ipv4_address}/' \
+      ~/.kube/config
+
+    kubectl get nodes
+  EOT
+}

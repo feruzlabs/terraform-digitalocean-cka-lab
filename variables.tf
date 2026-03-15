@@ -39,7 +39,13 @@ variable "worker_count" {
 }
 
 variable "image" {
-  description = "Droplet image (Ubuntu 22.04)"
+  description = "Droplet image (fallback if no custom snapshot)"
   type        = string
   default     = "ubuntu-22-04-x64"
+}
+
+variable "k8s_snapshot_name" {
+  description = "Name of the Packer-built Kubernetes node snapshot (e.g. cka-k8s-node-1-28)"
+  type        = string
+  default     = "cka-k8s-node-1-28"
 }

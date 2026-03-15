@@ -11,6 +11,15 @@ provider "digitalocean" {
   token = var.do_token
 }
 
+# Custom Kubernetes node image (built with Packer)
+data "digitalocean_images" "k8s_node" {
+  filter {
+    key       = "name"
+    values    = [var.k8s_snapshot_name]
+    match_by  = "substring"
+  }
+}
+
 # SSH key added to all droplets (use your public key)
 resource "digitalocean_ssh_key" "cka" {
   name       = "cka-lab-${terraform.workspace}"
@@ -22,7 +31,7 @@ resource "digitalocean_droplet" "master" {
   name   = "cka-master"
   region = var.region
   size   = var.master_size
-  image  = var.image
+  image  = length(data.digitalocean_images.k8s_node.images) > 0 ? data.digitalocean_images.k8s_node.images[0].id : var.image
 
   ssh_keys = [digitalocean_ssh_key.cka.fingerprint]
 
@@ -52,7 +61,7 @@ resource "digitalocean_droplet" "worker" {
   name   = "cka-worker-${count.index + 1}"
   region = var.region
   size   = var.worker_size
-  image  = var.image
+  image  = length(data.digitalocean_images.k8s_node.images) > 0 ? data.digitalocean_images.k8s_node.images[0].id : var.image
 
   depends_on = [digitalocean_droplet.master]
 
