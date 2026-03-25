@@ -19,15 +19,21 @@ modprobe br_netfilter
 sysctl -p /etc/sysctl.d/k8s.conf 2>/dev/null || true
 
 # Initialize control plane (Flannel CIDR)
-kubeadm init --pod-network-cidr=10.244.0.0/16
+kubeadm init --pod-network-cidr=192.168.0.0/16
 
 # Setup kubeconfig for root
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown root:root /root/.kube/config
 
-# Install Flannel CNI (pinned version)
-kubectl apply -f https://github.com/flannel-io/flannel/releases/download/v0.25.1/kube-flannel.yml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+
+echo "Waiting for Calico to be ready..."
+sleep 30
+
+kubectl -n kube-system set env daemonset/calico-node \
+  CALICO_IPV4POOL_IPIP=Never \
+  CALICO_IPV4POOL_VXLAN=Always
 
 # Generate join command for workers and serve via HTTP so workers can fetch without SSH
 kubeadm token create --print-join-command > /tmp/join-command
